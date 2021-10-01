@@ -1,0 +1,37 @@
+{
+  "name": "game-d2resurrected",
+  "version": "0.1.0",
+  "description": "Vortex game support for Diablo II Resurrected",
+  "main": "./dist/index.js",
+  "scripts": {
+    "webpack": "node ./node_modules/webpack/bin/webpack --config webpack.config.js --display-error-details --progress --profile --color",
+    "build": "npm run webpack && extractInfo && copyfiles -f ./gameart.jpg ./dist/ && copyfiles -f ./modinfo.json ./dist/modinfo",
+    "todebug": "copyfiles -f ./dist/*.* %appdata%/vortex_devel/plugins/game-d2r && copyfiles -f ./dist/modinfo/*.* %appdata%/vortex_devel/plugins/game-d2r/modinfo",
+    "torelease": "copyfiles -f ./dist/*.* %appdata%/vortex/plugins/game-d2r"
+  },
+  "author": "Nagev",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^16.10.2",
+    "@types/react": "^16.9.43",
+    "@types/react-bootstrap": "^0.32.20",
+    "@types/redux": "^3.6.0",
+    "@types/redux-thunk": "^2.1.0",
+    "bluebird": "^3.7.2",
+    "copyfiles": "^2.4.1",
+    "i18next": "^19.0.1",
+    "react": "^16.12.0",
+    "react-bootstrap": "^0.33.0",
+    "react-dom": "^16.12.0",
+    "ts-loader": "^6.0.4",
+    "typescript": "^3.5.2",
+    "vortex-api": "github:Nexus-Mods/vortex-api",
+    "webpack": "^4.35.0",
+    "webpack-cli": "^3.3.4"
+  },
+  "dependencies": {
+    "download-git-repo": "^3.0.2",
+    "redux-act": "^1.8.0",
+    "winapi-bindings": "Nexus-Mods/node-winapi-bindings"
+  }
+}

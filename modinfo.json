@@ -1,0 +1,12 @@
+{
+    "name": "vortexmerged",
+    "savepath": "vortexmerged/",
+    "mods": {
+        "enablerespec": 1,
+        "resetofflinemaps": 1
+    },
+    "config": {
+        "enablerespec": 1,
+        "resetofflinemaps": 1
+    }
+}
