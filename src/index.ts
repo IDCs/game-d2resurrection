@@ -1,5 +1,5 @@
 import { createAction } from 'redux-act'
-import { fs, log, types, selectors, util } from 'vortex-api';
+import { actions, fs, Icon, log, types, selectors, util } from 'vortex-api';
 import { IExtensionContext } from 'vortex-api/lib/types/api';
 
 import { GAME_ID, ID_CASC_VIEW, ID_D2_EXCEL, ID_MPQ_EDITOR, ID_D2_LAUNCHER, VORTEX_MERGED_MOD } from './constants';
@@ -7,13 +7,14 @@ import { testDefaultMod, installDefaultMod } from './installers';
 
 import { ensureMergedEntry, removeMergedEntry } from './mergedMod';
 
-import { testMerge, merge } from './mergers';
+import { testMerge, merge, resetMergeData } from './mergers';
 
 import path from 'path';
 import download from 'download-git-repo';
 
 import winapi from 'winapi-bindings';
 import { setD2RParameters } from './util';
+import React from 'react';
 
 const TOOL_URL = 'HighTechLowIQ/ModdingDiablo2Resurrected';
 const supportedTools: any[] = [
@@ -61,14 +62,17 @@ const supportedTools: any[] = [
 
 // actions
 const setInfoSeen = createAction('D2R_INFO_SEEN',
-  (profile: string, time: number) => ({ profile, time }));
+  (profileId: string, time: number) => ({ profileId, time }));
+
+const setActiveMPQ = createAction('D2R_ACTIVE_MPQ',
+  (profileId: string, modId: string) => ({ profileId, modId }));
 
 // reducer
 const reducer: types.IReducerSpec = {
   reducers: {
     [setInfoSeen as any]: (state, payload) => {
-      const { profile, time } = payload;
-      return util.setSafe(state, ['infoSeen', profile], { time });
+      const { profileId, time } = payload;
+      return util.setSafe(state, ['infoSeen', profileId], { time });
     },
   },
   defaults: {
@@ -142,6 +146,10 @@ function isD2R(gameId: string) {
   return gameId === GAME_ID;
 }
 
+function isMPQMod(mod: types.IMod) {
+  return (mod?.type === 'd2-mpq-mod' || mod.attributes.mpqName === path.basename(VORTEX_MERGED_MOD, path.extname(VORTEX_MERGED_MOD)));
+}
+
 function main(context: IExtensionContext) {
   context.registerReducer(['settings', 'diablo2resurrection'], reducer);
   context.registerGame({
@@ -179,21 +187,44 @@ function main(context: IExtensionContext) {
     (filePath: string, mergePath: string) => merge(context.api, filePath, mergePath), 'd2-merge-mod');
 
   context.registerAction('mods-action-icons', 999, 'resume', {}, 'D2R Make Active', instanceIds => {
-    const state = context.api.store.getState();
+    const state = context.api.getState();
     const modId = instanceIds[0];
     const mod: types.IMod = state.persistent.mods[GAME_ID]?.[modId];
-    if (mod?.attributes?.mpqName !== undefined) {
-      setD2RParameters(context.api, ['-mod', mod.attributes.mpqName]);
+    if (mod?.attributes?.mpqName !== undefined && isMPQMod(mod)) {
+      const profile = selectors.activeProfile(state);
+      if (util.getSafe(profile, ['modState', mod.id, 'enabled'], false)) {
+        setD2RParameters(context.api, ['-mod', mod.attributes.mpqName]);
+        const mods: { [modId: string]: types.IMod } = state.persistent.mods[GAME_ID] || {};
+        Object.keys(mods).forEach(key => {
+          context.api.store.dispatch(actions.setModAttribute(GAME_ID, key, 'isActiveMPQ', key === modId));
+        })
+      }
     }
   }, instanceIds => {
     const modId = instanceIds[0];
     const state = context.api.store.getState();
     const mod: types.IMod = state.persistent.mods[GAME_ID]?.[modId];
-    const gameMode = selectors.activeGameId(state);
-    return gameMode === GAME_ID && (mod?.type === 'd2-mpq-mod' || mod.attributes.mpqName === path.basename(VORTEX_MERGED_MOD, path.extname(VORTEX_MERGED_MOD)));
+    const profile = selectors.activeProfile(state);
+    return profile?.gameId === GAME_ID && isMPQMod(mod) && (util.getSafe(profile, ['modState', modId, 'enabled'], false));
+  });
+
+  context.registerTableAttribute('mods', {
+    id: 'd2activempq',
+    name: 'Active MPQ Mod',
+    description: 'The currently active MPQ mod for Diablo II: Resurrected',
+    icon: 'resume',
+    placement: 'table',
+    calc: (mod: types.IMod) => util.getSafe(mod, ['attributes', 'isActiveMPQ'], false),
+    customRenderer: (mod: types.IMod) => util.getSafe(mod, ['attributes', 'isActiveMPQ'], false) ? React.createElement(Icon, { name: 'resume' }, []) : null,
+    isToggleable: false,
+    edit: {},
+    isSortable: false,
+    isGroupable: false,
+    isDefaultVisible: true,
   });
   context.once(() => {
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
+      resetMergeData();
       const state = context.api.getState();
       const profile = selectors.profileById(state, profileId);
       if (profile?.gameId !== GAME_ID) {

@@ -1,5 +1,5 @@
 import path from 'path';
-import { actions, log, types } from 'vortex-api';
+import { actions, fs, log, selectors, types } from 'vortex-api';
 
 import { VORTEX_MERGED_MOD, GAME_ID } from './constants';
 
@@ -29,7 +29,10 @@ export async function createMergedEntry(api: types.IExtensionApi, modName: strin
       if (error !== null) {
         return reject(error);
       }
-      resolve();
+      const staging = selectors.installPathForGame(api.getState(), GAME_ID);
+      const filePath = path.join(staging, modName, 'dummy.txt');
+      await fs.writeFileAsync(filePath, 'dummy file', { encoding: 'utf8' });
+      return resolve();
     });
   });
 }

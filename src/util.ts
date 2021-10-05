@@ -2,8 +2,7 @@ import path from 'path';
 import { spawn } from 'child_process';
 import { actions, log, types, util } from 'vortex-api';
 
-import fs from 'fs/promises';
-import { Dirent } from 'fs';
+import { Dirent, promises as fs } from 'fs';
 
 import { GAME_ID, ID_D2_LAUNCHER, ID_MPQ_EDITOR } from './constants';
 

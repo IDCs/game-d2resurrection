@@ -1,13 +1,13 @@
 {
   "name": "game-d2resurrected",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Vortex game support for Diablo II Resurrected",
   "main": "./dist/index.js",
   "scripts": {
     "webpack": "node ./node_modules/webpack/bin/webpack --config webpack.config.js --display-error-details --progress --profile --color",
     "build": "npm run webpack && extractInfo && copyfiles -f ./gameart.jpg ./dist/ && copyfiles -f ./modinfo.json ./dist/modinfo",
     "todebug": "copyfiles -f ./dist/*.* %appdata%/vortex_devel/plugins/game-d2r && copyfiles -f ./dist/modinfo/*.* %appdata%/vortex_devel/plugins/game-d2r/modinfo",
-    "torelease": "copyfiles -f ./dist/*.* %appdata%/vortex/plugins/game-d2r"
+    "torelease": "copyfiles -f ./dist/*.* %appdata%/vortex/plugins/game-d2r && copyfiles -f ./dist/modinfo/*.* %appdata%/vortex/plugins/game-d2r/modinfo"
   },
   "author": "Nagev",
   "license": "MIT",
