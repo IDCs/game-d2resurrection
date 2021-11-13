@@ -49,7 +49,13 @@ export async function installDefaultMod(api: types.IExtensionApi, files: string[
       const out = path.join(destinationPath, 'out');
       await fs.ensureDirWritableAsync(out);
       for (const mpqFile of mpqs) {
-        await extractMPQ(api, path.join(destinationPath, mpqFile), out);
+        const mpqFilePath = path.join(destinationPath, mpqFile);
+        const stats : fs.Stats = await fs.statAsync(mpqFilePath);
+        if (stats.isFile()) {
+          await extractMPQ(api, mpqFilePath, out);
+        } else if (stats.isDirectory()) {
+          await fs.copyAsync(mpqFilePath, out);
+        }
       }
 
       const instructions: types.IInstruction[] = [{ type: 'setmodtype', value: 'd2-merge-mod' }];
