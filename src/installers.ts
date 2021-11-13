@@ -79,3 +79,25 @@ export async function installDefaultMod(api: types.IExtensionApi, files: string[
     }
   })
 }
+
+export function testLooseMod(files: string[], gameId: string): Promise<types.ISupportedResult> {
+  return Promise.resolve({ supported: gameId === GAME_ID && !files.find(file => path.extname(file) === MPQ_EXT)
+    && !!files.find(file => path.basename(file) === 'data'), requiredFiles: [] });
+}
+
+export async function installLooseMod(api: types.IExtensionApi, files: string[], destinationPath: string, gameId: string): Promise<types.IInstallResult> {
+ const instructions: types.IInstruction[] = files.reduce((accum, file) => {
+   if (accum.length === 0) {
+     accum.push({ type: 'setmodtype', value: 'd2-merge-mod' });
+    }
+    if (path.basename(file) === 'data') {
+       accum.push({
+        type: 'copy',
+        source: file,
+        destination: path.basename(file)
+      })
+    }
+    return accum;
+  }, []);
+  return Promise.resolve({ instructions });
+}
