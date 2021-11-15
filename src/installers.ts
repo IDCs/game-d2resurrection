@@ -49,7 +49,13 @@ export async function installDefaultMod(api: types.IExtensionApi, files: string[
       const out = path.join(destinationPath, 'out');
       await fs.ensureDirWritableAsync(out);
       for (const mpqFile of mpqs) {
-        await extractMPQ(api, path.join(destinationPath, mpqFile), out);
+        const mpqFilePath = path.join(destinationPath, mpqFile);
+        const stats : fs.Stats = await fs.statAsync(mpqFilePath);
+        if (stats.isFile()) {
+          await extractMPQ(api, mpqFilePath, out);
+        } else if (stats.isDirectory()) {
+          await fs.copyAsync(mpqFilePath, out);
+        }
       }
 
       const instructions: types.IInstruction[] = [{ type: 'setmodtype', value: 'd2-merge-mod' }];
@@ -72,4 +78,26 @@ export async function installDefaultMod(api: types.IExtensionApi, files: string[
       return Promise.resolve({ instructions });
     }
   })
+}
+
+export function testLooseMod(files: string[], gameId: string): Promise<types.ISupportedResult> {
+  return Promise.resolve({ supported: gameId === GAME_ID && !files.find(file => path.extname(file) === MPQ_EXT)
+    && !!files.find(file => path.basename(file) === 'data'), requiredFiles: [] });
+}
+
+export async function installLooseMod(api: types.IExtensionApi, files: string[], destinationPath: string, gameId: string): Promise<types.IInstallResult> {
+ const instructions: types.IInstruction[] = files.reduce((accum, file) => {
+   if (accum.length === 0) {
+     accum.push({ type: 'setmodtype', value: 'd2-merge-mod' });
+    }
+    if (path.basename(file) === 'data') {
+       accum.push({
+        type: 'copy',
+        source: file,
+        destination: path.basename(file)
+      })
+    }
+    return accum;
+  }, []);
+  return Promise.resolve({ instructions });
 }

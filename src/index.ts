@@ -3,7 +3,7 @@ import { actions, fs, Icon, log, types, selectors, util } from 'vortex-api';
 import { IExtensionContext } from 'vortex-api/lib/types/api';
 
 import { GAME_ID, ID_CASC_VIEW, ID_D2_EXCEL, ID_MPQ_EDITOR, ID_D2_LAUNCHER, VORTEX_MERGED_MOD } from './constants';
-import { testDefaultMod, installDefaultMod } from './installers';
+import { testDefaultMod, installDefaultMod, testLooseMod, installLooseMod } from './installers';
 
 import { ensureMergedEntry, removeMergedEntry } from './mergedMod';
 
@@ -182,6 +182,10 @@ function main(context: IExtensionContext) {
   context.registerInstaller('d2-mod-installer', 25, testDefaultMod,
     (files: string[], destinationPath: string, gameId: string) =>
       installDefaultMod(context.api, files, destinationPath, gameId));
+  
+  context.registerInstaller('d2-loose-installer', 25, testLooseMod,
+  (files: string[], destinationPath: string, gameId: string) =>
+    installLooseMod(context.api, files, destinationPath, gameId));
 
   context.registerMerge((game: types.IGame, discovery: types.IDiscoveryResult) => testMerge(context.api, game, discovery),
     (filePath: string, mergePath: string) => merge(context.api, filePath, mergePath), 'd2-merge-mod');
